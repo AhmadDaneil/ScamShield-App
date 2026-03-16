@@ -1,0 +1,2 @@
+assets/models/*.pt filter=lfs diff=lfs merge=lfs -text
+assets/models/*.ptl filter=lfs diff=lfs merge=lfs -text
