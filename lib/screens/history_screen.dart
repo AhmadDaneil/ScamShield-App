@@ -173,147 +173,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildHistoryList(BuildContext context, List<ScanResult> results) {
-    return ListView.separated(
-      itemCount: results.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final item = results[index];
-        return _buildHistoryTile(context, item, index);
-      },
-    );
-  }
-
-  Widget _buildHistoryTile(
-      BuildContext context, ScanResult item, int index) {
-    final color = item.isFake ? AppColors.fake : AppColors.real;
-    final icon = item.isFake ? Icons.dangerous_outlined : Icons.verified_outlined;
-    final preview = item.text.length > 80
-        ? '${item.text.substring(0, 80)}...'
-        : item.text;
-    final formatted = DateFormat('dd MMM, hh:mm a').format(item.timestamp);
-    final percent = (item.confidence * 100).toStringAsFixed(0);
-
-    return Dismissible(
-      key: Key(item.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
-        decoration: BoxDecoration(
-          color: AppColors.fake.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Icon(
-          Icons.delete_outline,
-          color: AppColors.fake,
-        ),
-      ),
-      onDismissed: (_) =>
-          context.read<HistoryCubit>().deleteScan(item.id),
-      child: GestureDetector(
+  return ListView.separated(
+    itemCount: results.length,
+    separatorBuilder: (_, __) => const SizedBox(height: 12),
+    itemBuilder: (context, index) {
+      final item = results[index];
+      return HistoryTile(
+        result: item,
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => ResultScreen(result: item),
           ),
         ),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Icon
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 22),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            item.label,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: color,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '$percent% confident',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecond,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      preview,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textPrimary,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      formatted,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecond,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              const Icon(
-                Icons.chevron_right,
-                color: AppColors.textSecond,
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).animate().fadeIn(delay: Duration(milliseconds: index * 80));
-  }
+        onDelete: () => context.read<HistoryCubit>().deleteScan(item.id),
+      ).animate().fadeIn(
+        delay: Duration(milliseconds: index * 80),
+      );
+    },
+  );
+}
 
   void _confirmClear(BuildContext context) {
     showDialog(

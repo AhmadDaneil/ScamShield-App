@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'firebase_option.dart';
+import 'firebase_options.dart';
 import 'cubits/auth/auth_cubit.dart';
 import 'cubits/scan/scan_cubit.dart';
 import 'cubits/history/history_cubit.dart';
@@ -14,10 +14,12 @@ import 'utils/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Initialize services
   final modelService = ModelService();
   await modelService.loadModel();
 
@@ -30,7 +32,7 @@ void main() async {
   ));
 }
 
-class ScamShieldApp extends StatelessWidget{
+class ScamShieldApp extends StatelessWidget {
   final ModelService modelService;
   final DatabaseService databaseService;
 
@@ -41,7 +43,7 @@ class ScamShieldApp extends StatelessWidget{
   });
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => AuthCubit()),
@@ -49,13 +51,14 @@ class ScamShieldApp extends StatelessWidget{
         BlocProvider(
           create: (_) => ScanCubit(
             modelService: modelService,
-            databaseService: databaseService
-            ),
+            databaseService: databaseService,
           ),
-          BlocProvider(
-            create:(_) => HistoryCubit(databaseService: databaseService,
-            ),
+        ),
+        BlocProvider(
+          create: (_) => HistoryCubit(
+            databaseService: databaseService,
           ),
+        ),
       ],
       child: MaterialApp(
         title: 'ScamShield',
@@ -63,6 +66,6 @@ class ScamShieldApp extends StatelessWidget{
         theme: AppTheme.lightTheme,
         home: const SplashScreen(),
       ),
-      );
+    );
   }
 }
