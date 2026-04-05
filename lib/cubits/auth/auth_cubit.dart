@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState>{
-  final FirenaseAuth _auth = FirenaseAuth.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   AuthCubit() : super(AuthInitial()) {
     _checkCurrentUser();
@@ -52,4 +52,8 @@ class AuthCubit extends Cubit<AuthState>{
         return 'Something went wrong. Please try again.';
     }
   }
+
+  void register(String text, String text2) {}
+
+  void signUp(String text, String text2) {}
 }

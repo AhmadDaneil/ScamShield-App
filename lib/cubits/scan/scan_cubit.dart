@@ -1,7 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uuid/uuid.dart';
 import 'scan_state.dart';
-import 'package:scamshield_app/models/scan_result.dart';
 import 'package:scamshield_app/services/model_service.dart';
 import 'package:scamshield_app/services/database_service.dart';
 

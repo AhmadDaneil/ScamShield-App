@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:scamshield_app/models/scan_result.dart';
 
 abstract class HistoryState extends Equatable{
+
+  const HistoryState();
   @override
   List<Object?> get props => [];
 }

@@ -2,6 +2,9 @@ import 'package:equatable/equatable.dart';
 import 'package:scamshield_app/models/scan_result.dart';
 
 abstract class ScanState extends Equatable {
+
+  const ScanState();
+  
   @override
   List<Object?> get props => [];
 }

@@ -2,12 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:intl/intl.dart';
 import '../cubits/history/history_cubit.dart';
 import '../cubits/history/history_state.dart';
 import '../models/scan_result.dart';
 import '../utils/app_colors.dart';
 import 'result_screen.dart';
+import 'package:scamshield_app/utils/history_tile.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -186,7 +186,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             builder: (_) => ResultScreen(result: item),
           ),
         ),
-        onDelete: () => context.read<HistoryCubit>().deleteScan(item.id),
+        onDelete: () => context.read<HistoryCubit>().deleteScan(item.id as int),
       ).animate().fadeIn(
         delay: Duration(milliseconds: index * 80),
       );

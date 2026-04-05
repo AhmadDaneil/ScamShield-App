@@ -29,7 +29,7 @@ class HistoryCubit extends Cubit<HistoryState> {
   }
 
   Future<void> deleteScan(int id) async {
-    await _databaseService.deleteScan(id);
+    await _databaseService.deleteScan(id as String);
     await loadHistory();
   }
 }
