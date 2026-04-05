@@ -65,4 +65,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'scamshield-app-4374a.firebasestorage.app',
     iosBundleId: 'com.example.scamshieldApp',
   );
+
 }

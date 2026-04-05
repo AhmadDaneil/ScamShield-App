@@ -8,9 +8,6 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
-
 android {
     namespace = "com.example.scamshield_app"
     compileSdk = flutter.compileSdkVersion
