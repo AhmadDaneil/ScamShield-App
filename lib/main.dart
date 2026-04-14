@@ -10,7 +10,7 @@ import 'services/model_service.dart';
 import 'services/database_service.dart';
 import 'screens/splash_screen.dart';
 import 'utils/app_theme.dart';
-import 'screens/home_screen.dart';
+//import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,7 +65,7 @@ class ScamShieldApp extends StatelessWidget {
         title: 'ScamShield',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: const HomeScreen(),
+        home: const SplashScreen(),
       ),
     );
   }

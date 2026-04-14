@@ -15,12 +15,12 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _formKey           = GlobalKey<FormState>();
+  final _emailController   = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirm = true;
+  bool _obscurePassword    = true;
+  bool _obscureConfirm     = true;
 
   @override
   void dispose() {
@@ -30,10 +30,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  void _onRegister() {
+    FocusScope.of(context).unfocus();
+    debugPrint('Register tapped');
+
+    if (_formKey.currentState!.validate()) {
+      debugPrint('Form valid — calling register');
+      context.read<AuthCubit>().register(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+    } else {
+      debugPrint('Form invalid');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
+        debugPrint('Auth state: $state');
+
         if (state is AuthAuthenticated) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -41,11 +58,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
             (_) => false,
           );
         }
+
         if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
               backgroundColor: AppColors.fake,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
@@ -61,7 +80,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Form(
-              key: _formKey,
+              key: _formKey,   // ← critical
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -97,7 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       icon: Icons.email_outlined,
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Please enter your email';
                       }
                       if (!value.contains('@')) {
@@ -214,7 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Login Link
+                  // Login link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -243,15 +262,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void _onRegister() {
-    if (_formKey.currentState!.validate()) {
-      context.read<AuthCubit>().register(
-            _emailController.text,
-            _passwordController.text,
-          );
-    }
-  }
-
   InputDecoration _inputDecoration({
     required String label,
     required IconData icon,
@@ -271,7 +281,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        borderSide: const BorderSide(
+          color: AppColors.primary,
+          width: 2,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.fake),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.fake, width: 2),
       ),
     );
   }

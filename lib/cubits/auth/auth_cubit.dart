@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_state.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthCubit extends Cubit<AuthState>{
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -18,17 +19,52 @@ class AuthCubit extends Cubit<AuthState>{
     }
   }
 
+  Future<void> register(String email, String password) async {
+  emit(AuthLoading());
+  try {
+    debugPrint('Attempting register for: $email');
+
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password.trim(),
+    );
+
+    debugPrint('Register success: ${credential.user?.email}');
+    emit(AuthAuthenticated(email: credential.user?.email ?? ''));
+
+  } on FirebaseAuthException catch (e) {
+    debugPrint('FirebaseAuthException code: ${e.code}');
+    debugPrint('FirebaseAuthException message: ${e.message}');
+    emit(AuthError(message: _mapFirebaseError(e.code)));
+
+  } catch (e, stackTrace) {
+    // ✅ Print the REAL error
+    debugPrint('REAL ERROR: $e');
+    debugPrint('STACK TRACE: $stackTrace');
+    emit(AuthError(message: e.toString()));  // ← show real error in snackbar
+  }
+}
+  
   Future<void> login(String email, String password) async {
     emit(AuthLoading());
     try{
-      final credential = await _auth.createUserWithEmailAndPassword(
+      debugPrint('Attempting login for: $email');
+
+      final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
+
+      debugPrint('Login success: ${credential.user?.email}');
       emit(AuthAuthenticated(email: credential.user?.email ?? ''));
+
     } on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuthException: ${e.code} — ${e.message}');
       emit(AuthError(message: _mapFirebaseError(e.code)));
-    }
+    } catch (e) {
+    debugPrint('Unexpected login error: $e');
+    emit(AuthError(message: 'Login failed. Please try again.'));
+  }
   }
 
   Future<void> logout() async{
@@ -52,8 +88,6 @@ class AuthCubit extends Cubit<AuthState>{
         return 'Something went wrong. Please try again.';
     }
   }
-
-  void register(String text, String text2) {}
 
   void signUp(String text, String text2) {}
 }
