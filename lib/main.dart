@@ -10,22 +10,21 @@ import 'services/model_service.dart';
 import 'services/database_service.dart';
 import 'screens/splash_screen.dart';
 import 'utils/app_theme.dart';
-//import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Initialize services
-  final modelService = ModelService();
-  await modelService.loadModel();
-
+  final modelService    = ModelService();
   final databaseService = DatabaseService();
   await databaseService.init();
+
+  if (!modelService.isLoaded) {
+  await modelService.loadModel(); // only when needed
+}
 
   runApp(ScamShieldApp(
     modelService: modelService,
@@ -65,7 +64,8 @@ class ScamShieldApp extends StatelessWidget {
         title: 'ScamShield',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: const SplashScreen(),
+        // ✅ Pass modelService directly to SplashScreen
+        home: SplashScreen(modelService: modelService),
       ),
     );
   }

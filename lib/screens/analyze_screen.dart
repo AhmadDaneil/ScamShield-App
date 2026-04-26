@@ -365,7 +365,16 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   }
 
   void _onAnalyze() {
-    FocusScope.of(context).unfocus();
-    context.read<ScanCubit>().analyzeText(_textController.text);
+  final modelService = context.read<ScanCubit>().modelService;
+
+  if (!modelService.isLoaded) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Model still loading... please wait")),
+    );
+    return;
   }
+
+  FocusScope.of(context).unfocus();
+  context.read<ScanCubit>().analyzeText(_textController.text);
+}
 }

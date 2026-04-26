@@ -1,4 +1,5 @@
 // lib/services/tokenizer_service.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class TokenizerService {
@@ -12,20 +13,31 @@ class TokenizerService {
   bool _isLoaded = false;
 
   Future<void> load() async {
-    if (_isLoaded) return;
+  if (_isLoaded) return;
 
-    final raw = await rootBundle.loadString('assets/vocab/vocab.txt');
-    final lines = raw.split('\n');
+  final raw = await rootBundle.loadString('assets/vocab/vocab.txt');
+  final lines = raw.split('\n');
 
-    for (int i = 0; i < lines.length; i++) {
-      final token = lines[i].trim();
-      if (token.isNotEmpty) {
-        _vocab[token] = i;
-      }
+  int tokenId = 0;                          // ← separate counter
+  for (final line in lines) {
+    final token = line.trim();
+    if (token.isNotEmpty) {
+      _vocab[token] = tokenId;
+      tokenId++;                            // ← only increments for real tokens
     }
-
-    _isLoaded = true;
   }
+
+  debugPrint('✅ Vocab loaded: $tokenId tokens');
+
+  // Sanity check — these must match DistilBERT distilbert-base-uncased
+  assert(_vocab['[PAD]']  == 0,   '[PAD] should be 0,   got ${_vocab['[PAD]']}');
+  assert(_vocab['[UNK]']  == 100, '[UNK] should be 100, got ${_vocab['[UNK]']}');
+  assert(_vocab['[CLS]']  == 101, '[CLS] should be 101, got ${_vocab['[CLS]']}');
+  assert(_vocab['[SEP]']  == 102, '[SEP] should be 102, got ${_vocab['[SEP]']}');
+  assert(tokenId          == 30522, 'Vocab size should be 30522, got $tokenId');
+
+  _isLoaded = true;
+}
 
   // Tokenize text into input_ids and attention_mask
   Map<String, List<int>> tokenize(String text) {

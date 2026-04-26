@@ -4,13 +4,14 @@ import 'package:scamshield_app/services/model_service.dart';
 import 'package:scamshield_app/services/database_service.dart';
 
 class ScanCubit extends Cubit<ScanState>{
-  final ModelService _modelService;
+  final ModelService modelService;
   final DatabaseService _databaseService;
+  
 
   ScanCubit({
     required ModelService modelService,
     required DatabaseService databaseService,
-  }) : _modelService = modelService,
+  }) : modelService = modelService,
        _databaseService = databaseService,
        super(ScanInitial());
   
@@ -27,12 +28,15 @@ class ScanCubit extends Cubit<ScanState>{
 
     emit(ScanLoading());
     try{
-      final result = await _modelService.predict(text);
+      final result = await modelService.predict(text);
       await _databaseService.insertScan(result);
       emit(ScanSuccess(result: result));
-    } catch (e){
-      emit(ScanError(message: 'Analysis failed. Please try again.'));
-    }
+    } catch (e, stackTrace) {
+  print("🔥 REAL ERROR: $e");
+  print("🔥 STACK TRACE: $stackTrace");
+
+  emit(ScanError(message: e.toString())); // show actual error
+}
   }
 
   void reset() => emit(ScanInitial());
