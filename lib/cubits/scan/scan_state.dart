@@ -1,10 +1,17 @@
 import 'package:equatable/equatable.dart';
-import 'package:scamshield_app/models/scan_result.dart';
+import '../../models/scan_result.dart';
+
+// Distinguishes error causes so the UI can respond differently.
+enum ScanErrorType {
+  offline,   // SocketException / no network
+  timeout,   // Request took too long
+  server,    // HTTP error or unexpected API response
+  input,     // Validation failure (client-side)
+}
 
 abstract class ScanState extends Equatable {
-
   const ScanState();
-  
+
   @override
   List<Object?> get props => [];
 }
@@ -23,8 +30,13 @@ class ScanSuccess extends ScanState {
 
 class ScanError extends ScanState {
   final String message;
-  const ScanError({required this.message});
+  final ScanErrorType errorType;
+
+  const ScanError({
+    required this.message,
+    this.errorType = ScanErrorType.server,
+  });
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, errorType];
 }

@@ -1,63 +1,107 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/scan_result.dart';
+import '../cubits/scan/scan_state.dart';
 import 'package:uuid/uuid.dart';
- 
+
+// Thrown by predict() with a typed cause so the cubit can emit the right
+// ScanErrorType without parsing error message strings.
+class ApiException implements Exception {
+  final String message;
+  final ScanErrorType type;
+  const ApiException(this.message, this.type);
+
+  @override
+  String toString() => message;
+}
+
 class ModelService extends ChangeNotifier {
-  // ── Config ─────────────────────────────────────────────────────────────────
-  // Change this to your deployed API URL for production.
-  // For local development use your machine's LAN IP (not localhost —
-  // Android emulator can't reach localhost of host machine).
-  //   Emulator  → "http://10.0.2.2:5000"
-  //   Real device on same WiFi → "http://192.168.x.x:5000"
-  //   Deployed  → "https://your-api.com"
+  // ── Config ──────────────────────────────────────────────────────────────
+  // Emulator  → "http://10.0.2.2:5000"
+  // Real device on same WiFi → "http://192.168.x.x:5000"
+  // Deployed  → "https://your-api.com"
   static const String _baseUrl = "http://10.62.48.163:5000";
- 
+
+  // Input limits
+  static const int maxChars = 5000;
+  static const int minChars = 10;
+
   bool _isLoaded = false;
   bool _hasError = false;
   String? _errorMessage;
- 
-  bool get isLoaded      => _isLoaded;
-  bool get hasError      => _hasError;
+  ScanErrorType? _errorType;
+
+  bool get isLoaded        => _isLoaded;
+  bool get hasError        => _hasError;
   String? get errorMessage => _errorMessage;
- 
-  // ── Initialize — just verify the API is reachable ─────────────────────────
+  ScanErrorType? get errorType => _errorType;
+
+  // ── Initialize — verify the API is reachable ─────────────────────────
   Future<void> loadModel() async {
     debugPrint("📦 Checking API health...");
     try {
       final response = await http
           .get(Uri.parse("$_baseUrl/health"))
           .timeout(const Duration(seconds: 10));
- 
+
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         debugPrint("✅ API ready — device: ${body['device']}");
-        _isLoaded  = true;
-        _hasError  = false;
+        _isLoaded     = true;
+        _hasError     = false;
         _errorMessage = null;
+        _errorType    = null;
       } else {
-        throw Exception("API returned status ${response.statusCode}");
+        throw ApiException(
+          "Server returned status ${response.statusCode}",
+          ScanErrorType.server,
+        );
       }
+    } on SocketException {
+      debugPrint("❌ Health check: device offline");
+      _setError("No internet connection. Please check your network.", ScanErrorType.offline);
+    } on TimeoutException {
+      debugPrint("❌ Health check: timed out");
+      _setError("Connection timed out. The server may be unavailable.", ScanErrorType.timeout);
+    } on ApiException catch (e) {
+      debugPrint("❌ Health check: ${e.message}");
+      _setError(e.message, e.type);
     } catch (e) {
-      debugPrint("❌ API health check failed: $e");
-      _hasError     = true;
-      _errorMessage = e.toString();
-      _isLoaded     = false;
+      debugPrint("❌ Health check: unexpected error: $e");
+      _setError("Could not reach the server. Please try again.", ScanErrorType.server);
     }
     notifyListeners();
   }
- 
-  // ── Predict ────────────────────────────────────────────────────────────────
+
+  // ── Retry health check (called from UI retry button) ─────────────────
+  Future<void> retry() => loadModel();
+
+  // ── Predict ───────────────────────────────────────────────────────────
   Future<ScanResult> predict(String rawText) async {
     debugPrint("🔥 predict() called, isLoaded=$_isLoaded");
- 
+
     if (!_isLoaded) {
-      throw Exception('API not ready — please check your connection');
+      throw ApiException(
+        'Server not reachable — please check your connection.',
+        ScanErrorType.offline,
+      );
     }
- 
+
+    // Client-side input guard (cubit also validates, belt-and-suspenders)
+    final trimmed = rawText.trim();
+    if (trimmed.length > maxChars) {
+      throw ApiException(
+        'Text is too long (${ trimmed.length } chars). '
+        'Please shorten to $maxChars characters or fewer.',
+        ScanErrorType.input,
+      );
+    }
+
     final t0 = DateTime.now();
- 
+
     try {
       final response = await http
           .post(
@@ -66,24 +110,30 @@ class ModelService extends ChangeNotifier {
             body: jsonEncode({"text": rawText}),
           )
           .timeout(const Duration(seconds: 30));
- 
+
       if (response.statusCode != 200) {
-        final body = jsonDecode(response.body);
-        throw Exception(body["error"] ?? "API error ${response.statusCode}");
+        String errorMsg = "Server error (${response.statusCode})";
+        try {
+          final body = jsonDecode(response.body);
+          errorMsg = body["error"] ?? errorMsg;
+        } catch (_) {}
+        throw ApiException(errorMsg, ScanErrorType.server);
       }
- 
+
       final data       = jsonDecode(response.body);
       final isFake     = data["is_fake"]    as bool;
       final fakeScore  = (data["fake_score"] as num).toDouble();
       final realScore  = (data["real_score"] as num).toDouble();
       final confidence = (data["confidence"] as num).toDouble();
       final elapsedMs  = data["elapsed_ms"] as int;
- 
-      debugPrint("✅ Prediction: ${data['label']} "
-          "(fake=$fakeScore, real=$realScore) "
-          "in ${DateTime.now().difference(t0).inMilliseconds}ms "
-          "(server: ${elapsedMs}ms)");
- 
+
+      debugPrint(
+        "✅ Prediction: ${data['label']} "
+        "(fake=$fakeScore, real=$realScore) "
+        "in ${DateTime.now().difference(t0).inMilliseconds}ms "
+        "(server: ${elapsedMs}ms)",
+      );
+
       return ScanResult(
         id:         const Uuid().v4(),
         text:       rawText,
@@ -91,17 +141,37 @@ class ModelService extends ChangeNotifier {
         confidence: confidence,
         timestamp:  DateTime.now(),
       );
-    } on http.ClientException catch (e) {
-      throw Exception('Network error: ${e.message}');
-    } catch (e) {
-      debugPrint("❌ predict() error: $e");
+
+    } on SocketException {
+      throw ApiException(
+        'No internet connection. Please check your network and try again.',
+        ScanErrorType.offline,
+      );
+    } on TimeoutException {
+      throw ApiException(
+        'The request timed out. The server may be overloaded — please try again shortly.',
+        ScanErrorType.timeout,
+      );
+    } on ApiException {
       rethrow;
+    } catch (e) {
+      debugPrint("❌ predict() unexpected error: $e");
+      throw ApiException(
+        'Something went wrong. Please try again.',
+        ScanErrorType.server,
+      );
     }
   }
- 
+
+  void _setError(String message, ScanErrorType type) {
+    _hasError     = true;
+    _errorMessage = message;
+    _errorType    = type;
+    _isLoaded     = false;
+  }
+
   @override
   void dispose() {
     super.dispose();
   }
 }
- 
