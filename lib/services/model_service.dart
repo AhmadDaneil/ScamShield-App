@@ -23,8 +23,7 @@ class ModelService extends ChangeNotifier {
   // Emulator  → "http://10.0.2.2:5000"
   // Real device on same WiFi → "http://192.168.x.x:5000"
   // Deployed  → "https://your-api.com"
-  static const String _baseUrl = "http://10.62.48.163:5000";
-
+static const String _baseUrl = "http://10.62.48.163:5000";
   // Input limits
   static const int maxChars = 5000;
   static const int minChars = 10;

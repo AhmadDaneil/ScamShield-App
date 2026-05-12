@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../cubits/auth/auth_cubit.dart';
 import '../cubits/navigation/navigation_cubit.dart';
 import '../cubits/navigation/navigation_state.dart';
 import '../utils/app_colors.dart';
 import 'analyze_screen.dart';
 import 'history_screen.dart';
-import 'login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -40,13 +38,6 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.logout, color: AppColors.textSecond),
-                onPressed: () => _onLogout(context),
-                tooltip: 'Logout',
-                ),
-            ],
           ),
           body: _pages[navState.currentIndex],
           bottomNavigationBar: NavigationBar(
@@ -69,31 +60,5 @@ class HomeScreen extends StatelessWidget {
         );
       },
     );
-  }
-
-  void _onLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                context.read<AuthCubit>().logout();
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (_) => false,
-                );
-              },
-              child: const Text('Logout', style: TextStyle(color: AppColors.fake),
-              ),
-              ),
-        ],
-      )
-      );
   }
 }

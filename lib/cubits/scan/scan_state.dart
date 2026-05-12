@@ -11,7 +11,7 @@ enum ScanErrorType {
 
 abstract class ScanState extends Equatable {
   const ScanState();
-
+  
   @override
   List<Object?> get props => [];
 }

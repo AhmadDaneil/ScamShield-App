@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'firebase_options.dart';
-import 'cubits/auth/auth_cubit.dart';
 import 'cubits/scan/scan_cubit.dart';
 import 'cubits/history/history_cubit.dart';
 import 'cubits/navigation/navigation_cubit.dart';
@@ -46,7 +45,6 @@ class ScamShieldApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => AuthCubit()),
         BlocProvider(create: (_) => NavigationCubit()),
         BlocProvider(
           create: (_) => ScanCubit(
